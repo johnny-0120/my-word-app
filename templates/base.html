@@ -4,32 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+    </style>
     <title>{% block title %}{% endblock %} - 我的單字書</title>
-
-<style>
-    .word-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1rem;
-    }
-</style>
-
 </head>
 <body>
     <nav class="container-fluid">
         <ul>
             <li><a href="/"><strong>我的單字書</strong></a></li>
         </ul>
-        <ul>
-            <li><a href="/">單字列表</a></li>
-            <li><a href="/add">新增單字</a></li>
-            <li><a href="/review" role="button">開始複習</a></li>
-        </ul>
-    </nav>
+        {% if current_user.is_authenticated %}
+            <ul>
+                <li><a>歡迎, {{ current_user.username }}</a></li>
+                <li><a href="{{ url_for('index') }}">單字列表</a></li>
+                <li><a href="{{ url_for('add_choice') }}">新增單字</a></li>
+                <li><a href="{{ url_for('review_choice') }}" role="button">開始複習</a></li>
+                <li><a href="{{ url_for('logout') }}" class="secondary">登出</a></li>
+            </ul>
+        {% else %}
+            <ul>
+                <li><a href="{{ url_for('login') }}">登入</a></li>
+                <li><a href="{{ url_for('register') }}" role="button">註冊</a></li>
+            </ul>
+        {% endif %}
+        </nav>
 
     <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <article class=" {{ category }} ">
+                {{ message }}
+            </article>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </main>
 
+    <footer class="container">
+        <small>由 Gemini 指導，你親手打造的學習工具。</small>
+    </footer>
 </body>
 </html>
