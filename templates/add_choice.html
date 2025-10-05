@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}選擇新增方式{% endblock %}
+
+{% block content %}
+    <h1 align="center">你要如何新增單字？</h1>
+    <div class="grid">
+        <article>
+            <header><strong>🚀 智能查詢 (推薦)</strong></header>
+            <p>只需要輸入英文單字，系統會自動為你查詢定義、例句與字根分析。</p>
+            <footer><a href="{{ url_for('add_smart') }}" role="button">開始智能查詢</a></footer>
+        </article>
+        <article>
+            <header><strong>✍️ 手動輸入</strong></header>
+            <p>如果你有自己偏好的定義或例句，或者想新增的是特殊片語，你可以手動輸入所有欄位。</p>
+            <footer><a href="{{ url_for('add_manual') }}" role="button" class="secondary">手動輸入</a></footer>
+        </article>
+    </div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}單字建議{% endblock %}
+
+{% block content %}
+    <h1 align="center">關於 "{{ query }}" 的單字建議</h1>
+    <p>AI 認為以下幾個英文單字可能符合你的需求，請選擇一個來查看詳細資訊並加入單字書：</p>
+
+    {% if error %}
+        <article>
+            <header><strong style="color: var(--pico-color-red-500);">發生錯誤</strong></header>
+            <p>{{ error }}</p>
+        </article>
+    {% elif suggestions %}
+        {% for suggestion in suggestions %}
+            <article>
+                <header>
+                    <strong>{{ suggestion.word }}</strong>
+                </header>
+                <p>{{ suggestion.hint }}</p>
+                <footer>
+                    <form action="{{ url_for('lookup') }}" method="post">
+                        <input type="hidden" name="word" value="{{ suggestion.word }}">
+                        <button type="submit">選擇這個單字</button>
+                    </form>
+                </footer>
+            </article>
+        {% endfor %}
+    {% else %}
+        <p>找不到相關的建議。</p>
+    {% endif %}
+{% endblock %}

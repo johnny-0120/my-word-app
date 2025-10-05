@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}AI 綜合測驗{% endblock %}
+{% block content %}
+    <h1 align="center">AI 智慧綜合測驗</h1>
+    <p>請將下方的單字，填入故事中對應的空格內。</p>
+
+    <article>
+        <header><strong>單字庫：</strong></header>
+        <p style="font-size: 1.2em; font-family: monospace;">
+            {{ shuffled_words | join(' / ') }}
+        </p>
+    </article>
+
+    <form action="{{ url_for('check_multi_cloze') }}" method="post">
+        <article>
+            <header><strong>故事填空：</strong></header>
+            <p style="font-size: 1.1em; line-height: 2.5;">{{ story_with_blanks | safe }}</p>
+
+            <input type="hidden" name="correct_words_json" value="{{ correct_words_json }}">
+            <button type="submit" class="contrast">提交答案</button>
+        </article>
+    </form>
+{% endblock %}

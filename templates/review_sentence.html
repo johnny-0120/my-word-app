@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}AI 造句練習{% endblock %}
+{% block content %}
+    <article>
+        <header><h2>AI 文法教練</h2></header>
+        <p>請使用單字 "<strong>{{ word['word'] }}</strong>" 造一個英文句子。</p>
+        <p><em>(提示：它的意思是「{{ word['definition'] }}」)</em></p>
+
+        <form action="{{ url_for('check_sentence') }}" method="post">
+            <textarea name="user_sentence" rows="5" placeholder="請在此寫下你的句子..." required autofocus></textarea>
+            <input type="hidden" name="word" value="{{ word['word'] }}">
+            <button type="submit">請 AI 批改</button>
+        </form>
+    </article>
+{% endblock %}

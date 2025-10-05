@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}選擇複習模式{% endblock %}
+
+{% block content %}
+    <h1 align="center">請選擇今天的複習模式</h1>
+    <div class="grid">
+        <article>
+            <header><strong>✍️ 經典填空測驗</strong></header>
+            <p>根據定義和例句，拼寫出正確的單字。這是最基礎的記憶力測驗。</p>
+            <footer><a href="{{ url_for('review_cloze') }}" role="button">開始經典測驗</a></footer>
+        </article>
+        <article>
+            <header><strong>🚀 AI 文法教練 (新!)</strong></header>
+            <p>系統會給你一個單字，請你用它來造一個英文句子。AI 會即時為你的句子提供文法修正與優化建議！</p>
+            <footer><a href="{{ url_for('review_sentence') }}" role="button" class="contrast">挑戰 AI 造句</a></footer>
+        </article>
+        <article>
+            <header><strong>🧠 AI 綜合測驗 (新!)</strong></header>
+            <p>從你的弱點單字中挑選數個，由 AI 創造一個情境故事讓你填空，全面考驗你的理解與應用能力！</p>
+            <footer><a href="{{ url_for('review_multi_cloze') }}" role="button">挑戰綜合測驗</a></footer>
+        </article>
+    </div>
+{% endblock %}

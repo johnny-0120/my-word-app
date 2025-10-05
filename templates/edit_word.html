@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}編輯單字{% endblock %}
+
+{% block content %}
+    <h1 align="center">編輯 "{{ word['word'] }}"</h1>
+    <form method="post">
+        <label for="word">單字</label>
+        <input type="text" id="word" name="word" value="{{ word['word'] }}" required>
+
+        <label for="definition">定義</label>
+        <textarea id="definition" name="definition" rows="3" required>{{ word['definition'] }}</textarea>
+
+        <label for="example_sentence">例句 (選填)</label>
+        <textarea id="example_sentence" name="example_sentence" rows="5">{{ word['example_sentence'] }}</textarea>
+
+        <label for="etymology">字根分析 (選填)</label>
+        <textarea id="etymology" name="etymology" rows="2">{{ word['etymology'] }}</textarea>
+
+        <button type="submit">儲存變更</button>
+    </form>
+{% endblock %}

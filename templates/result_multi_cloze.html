@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}綜合測驗結果{% endblock %}
+{% block content %}
+    <h1 align="center">綜合測驗結果</h1>
+    <p>你一共答對了 {{ score }} / {{ total }} 題。</p>
+
+    <article>
+        <header><strong>你的答案分析：</strong></header>
+        <p style="font-size: 1.1em; line-height: 2.5;">
+            {{ result_story | safe }}
+        </p>
+        <p><small>(<span style="color:green">綠色</span>代表答對, <span style="color:red; text-decoration: line-through;">紅色刪除線</span>代表答錯)</small></p>
+    </article>
+
+    <div class="grid">
+        <a href="{{ url_for('review_multi_cloze') }}" role="button" class="contrast">再來一題 -></a>
+        <a href="{{ url_for('review_choice') }}" role="button" class="secondary">返回模式選擇</a>
+    </div>
+{% endblock %}

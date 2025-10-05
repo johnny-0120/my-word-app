@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}查詢新單字{% endblock %}
+
+{% block content %}
+    <h1 align="center">智能查詢新單字</h1>
+    <p align="center">請輸入你想要學習的英文單字，我會自動為你查詢它的所有資訊！</p>
+
+    <form action="/lookup" method="post">
+        <label for="word">英文單字</label>
+        <input type="text" id="word" name="word" placeholder="輸入英文單字查詢定義，或輸入中文來尋找靈感..." required autofocus>
+        <button type="submit">查詢單字</button>
+    </form>
+{% endblock %}

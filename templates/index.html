@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}首頁{% endblock %}
+
+{% block content %}
+    <h1 align="center">我的單字列表</h1>
+
+    <form method="get" action="{{ url_for('index') }}">
+        <div class="grid">
+            <input type="search" id="query" name="query" placeholder="搜尋單字、定義或例句..." value="{{ query or '' }}">
+            <button type="submit">搜尋</button>
+        </div>
+    </form>
+
+    <hr>
+
+    {% if query %}
+        <h2>搜尋 "{{ query }}" 的結果：</h2>
+    {% else %}
+        <h2>所有單字列表</h2>
+    {% endif %}
+
+    <div class="word-grid">
+        {% for word in words %}
+            <article>
+                <header>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="word-break: break-all;">{{ word['word'] }}</strong>
+                        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                            <a href="{{ url_for('edit_word', id=word['id']) }}" role="button" class="contrast" style="margin: 0; padding: 0.2rem 0.5rem;">編輯</a>
+                            <form action="{{ url_for('delete_word', id=word['id']) }}" method="post" onsubmit="return confirm('確定要刪除這個單字嗎？');" style="margin: 0;">
+                                <button type="submit" class="secondary" style="margin: 0; padding: 0.2rem 0.5rem;">刪除</button>
+                            </form>
+                        </div>
+                    </div>
+                </header>
+                <p><strong>定義:</strong> {{ word['definition'] }}</p>
+                {% if word['example_sentence'] %}
+                    <p><em>例句: {{ word['example_sentence'] }}</em></p>
+                {% endif %}
+                {% if word['etymology'] %}
+                    <p><strong>字根分析:</strong> {{ word['etymology'] }}</p>
+                {% endif %}
+
+                <footer>
+                    {% if word['review_count'] > 0 %}
+                        {% set mastery_percent = (word['correct_count'] / word['review_count'] * 100) | round | int %}
+                        <label for="progress-{{ word['id'] }}">
+                            熟練度: {{ mastery_percent }}% (答對 {{ word['correct_count'] }} / {{ word['review_count'] }} 次)
+                        </label>
+                        <progress id="progress-{{ word['id'] }}" value="{{ word['correct_count'] }}" max="{{ word['review_count'] }}"></progress>
+                    {% else %}
+                        <small><em>尚未複習過</em></small>
+                    {% endif %}
+                </footer>
+            </article>
+        {% else %}
+            <div> 
+                {% if query %}
+                    <p>找不到符合 "{{ query }}" 的單字。</p>
+                {% else %}
+                    <p>目前沒有任何單字，<a href="{{ url_for('add_choice') }}">趕快新增一個吧！</a></p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    {% endblock %}

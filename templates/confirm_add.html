@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}確認新增{% endblock %}
+
+{% block content %}
+    <h1 align="center">請確認單字資訊</h1>
+
+    <article>
+        <header>
+            <strong>{{ word }}</strong>
+        </header>
+        <form action="{{ url_for('save') }}" method="post" id="save-form">
+            <input type="hidden" name="word" value="{{ word }}">
+            <input type="hidden" name="definition" value="{{ definition }}">
+            <input type="hidden" name="example_sentence" value="{{ example_sentence }}">
+            <input type="hidden" name="etymology" value="{{ etymology }}">
+
+            <p><strong>查詢到的定義：</strong><br>{{ definition }}</p>
+            <p><strong>查詢到的例句：</strong><br>{{ example_sentence }}</p>
+            <p><strong>查詢到的字根分析：</strong><br>{{ etymology }}</p>
+        </form>
+        <footer>
+            <button type="submit" form="save-form">儲存到我的單字書</button>
+        </footer>
+    </article>
+
+    {% if related_words %}
+    <hr>
+    <h2>相關單字探索 🧭</h2>
+    <div class="word-grid">
+        {% for rel_word in related_words %}
+        <article>
+            <header><strong>{{ rel_word.word }}</strong></header>
+            <p>{{ rel_word.hint }}</p>
+            <footer>
+                <form action="{{ url_for('lookup') }}" method="post">
+                    <input type="hidden" name="word" value="{{ rel_word.word }}">
+                    <button type="submit" class="contrast outline">查詢這個單字</button>
+                </form>
+            </footer>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endblock %}

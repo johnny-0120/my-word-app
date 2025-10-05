@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}經典填空測驗{% endblock %}
+
+{% block content %}
+<div id="review-container">
+    </div>
+
+<div class="grid" style="margin-top: 1rem;">
+    <a id="next-word-btn" href="#" role="button" class="contrast" style="display: none;">下一題 -></a>
+    <a href="{{ url_for('review_choice') }}" role="button" class="secondary">返回模式選擇</a>
+</div>
+
+<script>
+    // 找到我們要操作的 HTML 元素
+    const reviewContainer = document.getElementById('review-container');
+    const nextWordBtn = document.getElementById('next-word-btn');
+    let currentWord = null;
+
+    // 函式：用來產生問題的 HTML 內容
+    function renderQuestion(word) {
+        currentWord = word;
+        let exampleSentenceHTML = '';
+        if (word.example_sentence) {
+            const clozeSentence = word.example_sentence.replace(word.word, '_______');
+            exampleSentenceHTML = `<p><strong>例句填空:</strong> ${clozeSentence}</p>`;
+        }
+
+        reviewContainer.innerHTML = `
+            <article>
+                <header><h2>經典填空測驗</h2></header>
+                <p><strong>定義:</strong> ${word.definition}</p>
+                ${exampleSentenceHTML}
+                <form id="cloze-form">
+                    <input type="text" name="guess" placeholder="請在此輸入答案" required autofocus>
+                    <input type="hidden" name="word_id" value="${word.id}">
+                    <button type="submit">送出答案</button>
+                </form>
+            </article>
+        `;
+        // 為新的表單加上事件監聽
+        document.getElementById('cloze-form').addEventListener('submit', handleFormSubmit);
+        nextWordBtn.style.display = 'none'; // 隱藏下一題按鈕
+    }
+
+    // 函式：用來產生結果的 HTML 內容
+    function renderResult(result) {
+        let resultHTML = '';
+        if (result.is_correct) {
+            resultHTML = `
+                <hgroup>
+                    <h1 style="color: var(--pico-color-green-500);">🎉 答對了！ 🎉</h1>
+                </hgroup>
+            `;
+        } else {
+            resultHTML = `
+                <hgroup>
+                    <h1 style="color: var(--pico-color-red-500);">😥 答錯了... 😥</h1>
+                    <h2>你的答案: ${result.user_guess}</h2>
+                </hgroup>
+            `;
+        }
+
+        resultHTML += `
+            <article>
+                <header><strong>正確答案是: ${result.correct_word.word}</strong></header>
+                <p><strong>定義:</strong> ${result.correct_word.definition}</p>
+                <footer><em>例句: ${result.correct_word.example_sentence}</em></footer>
+            </article>
+        `;
+
+        if (result.explanation) {
+            resultHTML += `
+            <article style="background-color: var(--pico-color-amber-100); border-color: var(--pico-color-amber-400);">
+                <header><strong>💡 AI 學習筆記：</strong></header>
+                <pre style="white-space: pre-wrap; word-wrap: break-word;">${result.explanation}</pre>
+            </article>
+            `;
+        }
+        reviewContainer.innerHTML = resultHTML;
+        nextWordBtn.style.display = 'block'; // 顯示下一題按鈕
+    }
+
+    // 函式：處理表單提交
+    async function handleFormSubmit(event) {
+        event.preventDefault(); // 阻止頁面刷新！
+
+        const formData = new FormData(event.target);
+        const data = {
+            guess: formData.get('guess'),
+            word_id: formData.get('word_id')
+        };
+
+        const response = await fetch('/api/check/cloze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        renderResult(result);
+    }
+
+    // 函式：取得下一個單字
+    async function fetchNextWord() {
+        const response = await fetch('/api/review/next_word');
+        const word = await response.json();
+        renderQuestion(word);
+    }
+
+    // 當頁面載入時，自動取得第一個單字
+    fetchNextWord();
+
+    // 為「下一題」按鈕加上點擊事件
+    nextWordBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        fetchNextWord();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}手動新增單字{% endblock %}
+
+{% block content %}
+    <h1 align="center">手動新增單字</h1>
+    <form method="post">
+        <label for="word">單字</label>
+        <input type="text" id="word" name="word" required>
+
+        <label for="definition">定義</label>
+        <textarea id="definition" name="definition" rows="3" required></textarea>
+
+        <label for="example_sentence">例句 (選填)</label>
+        <textarea id="example_sentence" name="example_sentence" rows="5"></textarea>
+
+        <label for="etymology">字根分析 (選填)</label>
+        <textarea id="etymology" name="etymology" rows="2"></textarea>
+
+        <button type="submit">儲存單字</button>
+    </form>
+{% endblock %}

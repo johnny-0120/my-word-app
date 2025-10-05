@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}作答結果{% endblock %}
+
+{% block content %}
+    {% if is_correct %}
+        <hgroup>
+            <h1 style="color: var(--pico-color-green-500);">🎉 答對了！ 🎉</h1>
+            <h2>太棒了！</h2>
+        </hgroup>
+    {% else %}
+        <hgroup>
+            <h1 style="color: var(--pico-color-red-500);">😥 答錯了... 😥</h1>
+            <h2>你的答案: {{ user_guess }}</h2>
+        </hgroup>
+    {% endif %}
+
+    <article>
+        <header><strong>正確答案是: {{ correct_word['word'] }}</strong></header>
+        <p><strong>定義:</strong> {{ correct_word['definition'] }}</p>
+        {% if correct_word['example_sentence'] %}
+            <footer><em>例句: {{ correct_word['example_sentence'] }}</em></footer>
+        {% endif %}
+    </article>
+
+    {% if explanation %}
+    <article style="background-color: var(--pico-color-amber-100); border-color: var(--pico-color-amber-400);">
+        <header><strong>💡 AI 學習筆記：</strong></header>
+        <pre style="white-space: pre-wrap; word-wrap: break-word;">{{ explanation }}</pre>
+    </article>
+    {% endif %}
+    <div class="grid">
+        <a href="{{ url_for('review_cloze') }}" role="button" class="contrast">複習下一個單字 -></a>
+        <a href="{{ url_for('review_choice') }}" role="button" class="secondary">返回模式選擇</a>
+    </div>
+{% endblock %}

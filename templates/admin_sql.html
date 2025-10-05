@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}執行 SQL{% endblock %}
+
+{% block content %}
+    <h1 align="center">秘密後台：執行 SQL</h1>
+    <p>請將 Gemini 產生的 SQL 指令碼貼到下方文字框中，然後點擊執行。**警告：這是一個高權限操作，請僅貼上可信任的指令碼！**</p>
+
+    {% if message %}
+        <article style="background-color: var(--pico-color-green-100); border-color: var(--pico-color-green-400);">
+            {{ message }}
+        </article>
+    {% endif %}
+
+    <form method="post">
+        <label for="sql_script">SQL 指令碼</label>
+        <textarea id="sql_script" name="sql_script" rows="15" placeholder="INSERT INTO words (...) VALUES (...);"></textarea>
+        <button type="submit">執行</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}AI 批改結果{% endblock %}
+
+{% block content %}
+    <h1 align="center">AI 批改報告</h1>
+
+    <article>
+        <header><strong>你寫的句子：</strong></header>
+        <blockquote>{{ user_sentence }}</blockquote>
+    </article>
+
+    {% if ai_feedback.error %}
+        <article>
+            <header><strong style="color: var(--pico-color-red-500);">批改時發生錯誤</strong></header>
+            <p>{{ ai_feedback.error }}</p>
+        </article>
+    {% else %}
+        <article>
+            <header><strong>AI 的分析與建議</strong></header>
+
+            <h5>文法分析</h5>
+            <p>{{ ai_feedback.analysis }}</p>
+
+            <h5>優化建議</h5>
+            <blockquote>{{ ai_feedback.suggestion }}</blockquote>
+
+            <h5>單字用法評估</h5>
+            {% if ai_feedback.usage_ok %}
+                <p style="color: var(--pico-color-green-500);">✅ 你對這個單字的使用是恰當的！</p>
+            {% else %}
+                <p style="color: var(--pico-color-orange-500);">⚠️ 你對這個單字的使用可能不太自然，參考上面的優化建議吧！</p>
+            {% endif %}
+        </article>
+    {% endif %}
+
+    <div class="grid">
+        <a href="{{ url_for('review_sentence') }}" role="button" class="contrast">練習下一個單字 -></a>
+        <a href="{{ url_for('review_choice') }}" role="button" class="secondary">返回模式選擇</a>
+    </div>
+{% endblock %}
