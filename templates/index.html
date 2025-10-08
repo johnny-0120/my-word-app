@@ -25,10 +25,11 @@
             <article>
                 <header>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong style="word-break: break-all;">{{ word['word'] }}</strong>
+                        
+                        <a href="{{ url_for('word_detail', word_id=word.id) }}" style="font-weight: bold; word-break: break-all;">{{ word.word }}</a>
                         <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                            <a href="{{ url_for('edit_word', id=word['id']) }}" role="button" class="contrast" style="margin: 0; padding: 0.2rem 0.5rem;">編輯</a>
-                            <form action="{{ url_for('delete_word', id=word['id']) }}" method="post" onsubmit="return confirm('確定要刪除這個單字嗎？');" style="margin: 0;">
+                            <a href="{{ url_for('edit_word', id=word.id) }}" role="button" class="contrast" style="margin: 0; padding: 0.2rem 0.5rem;">編輯</a>
+                            <form action="{{ url_for('delete_word', id=word.id) }}" method="post" onsubmit="return confirm('確定要刪除這個單字嗎？');" style="margin: 0;">
                                 <button type="submit" class="secondary" style="margin: 0; padding: 0.2rem 0.5rem;">刪除</button>
                             </form>
                         </div>
@@ -38,17 +39,14 @@
                 {% if word['example_sentence'] %}
                     <p><em>例句: {{ word['example_sentence'] }}</em></p>
                 {% endif %}
-                {% if word['etymology'] %}
-                    <p><strong>字根分析:</strong> {{ word['etymology'] }}</p>
-                {% endif %}
-
+                
                 <footer>
                     {% if word['review_count'] > 0 %}
                         {% set mastery_percent = (word['correct_count'] / word['review_count'] * 100) | round | int %}
-                        <label for="progress-{{ word['id'] }}">
+                        <label for="progress-{{ word.id }}">
                             熟練度: {{ mastery_percent }}% (答對 {{ word['correct_count'] }} / {{ word['review_count'] }} 次)
                         </label>
-                        <progress id="progress-{{ word['id'] }}" value="{{ word['correct_count'] }}" max="{{ word['review_count'] }}"></progress>
+                        <progress id="progress-{{ word.id }}" value="{{ word['correct_count'] }}" max="{{ word['review_count'] }}"></progress>
                     {% else %}
                         <small><em>尚未複習過</em></small>
                     {% endif %}
@@ -64,4 +62,4 @@
             </div>
         {% endfor %}
     </div>
-    {% endblock %}
+{% endblock %}

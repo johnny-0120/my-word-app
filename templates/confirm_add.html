@@ -4,7 +4,7 @@
 
 {% block content %}
     <h1 align="center">請確認單字資訊</h1>
-
+    
     <article>
         <header>
             <strong>{{ word }}</strong>
@@ -13,14 +13,44 @@
             <input type="hidden" name="word" value="{{ word }}">
             <input type="hidden" name="definition" value="{{ definition }}">
             <input type="hidden" name="example_sentence" value="{{ example_sentence }}">
-            <input type="hidden" name="etymology" value="{{ etymology }}">
+            <input type="hidden" name="etymology_json" value="{{ etymology | tojson | safe }}">
+            <input type="hidden" name="synonyms_json" value="{{ synonyms | tojson | safe }}">
+            <input type="hidden" name="antonyms_json" value="{{ antonyms | tojson | safe }}">
+            
+            <p><strong>定義：</strong><br>{{ definition }}</p>
+            <p><strong>例句：</strong><br>{{ example_sentence }}</p>
 
-            <p><strong>查詢到的定義：</strong><br>{{ definition }}</p>
-            <p><strong>查詢到的例句：</strong><br>{{ example_sentence }}</p>
-            <p><strong>查詢到的字根分析：</strong><br>{{ etymology }}</p>
-        </form>
+            {% if etymology and (etymology.prefixes or etymology.roots or etymology.suffixes) %}
+            <p><strong>字根分析：</strong><br>
+                {% for p in etymology.prefixes %}
+                    <kbd>字首: {{ p.prefix }} ({{ p.meaning }})</kbd>
+                {% endfor %}
+                {% for r in etymology.roots %}
+                    <kbd>字根: {{ r.root }} ({{ r.meaning }})</kbd>
+                {% endfor %}
+                {% for s in etymology.suffixes %}
+                    <kbd>字尾: {{ s.suffix }} ({{ s.meaning }})</kbd>
+                {% endfor %}
+            </p>
+            {% endif %}
+
+            {% if synonyms %}
+                <p><strong>同義詞：</strong><br>
+                {% for s in synonyms %}
+                    <kbd>{{ s }}</kbd>
+                {% endfor %}
+                </p>
+            {% endif %}
+            {% if antonyms %}
+                <p><strong>反義詞：</strong><br>
+                {% for a in antonyms %}
+                    <kbd>{{ a }}</kbd>
+                {% endfor %}
+                </p>
+            {% endif %}
+            </form>
         <footer>
-            <button type="submit" form="save-form">儲存到我的單字書</button>
+            <button type="submit" form="save-form">儲存並建立關聯</button>
         </footer>
     </article>
 
@@ -42,4 +72,5 @@
         {% endfor %}
     </div>
     {% endif %}
-    {% endblock %}
+
+{% endblock %}

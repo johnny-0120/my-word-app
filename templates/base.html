@@ -20,19 +20,24 @@
         </ul>
         {% if current_user.is_authenticated %}
             <ul>
-                <li><a>歡迎, {{ current_user.username }}</a></li>
-                <li><a href="{{ url_for('index') }}">單字列表</a></li>
+                <li><a href="{{ url_for('index') }}">我的列表</a></li>
+                <li>
+                    <details role="list" dir="rtl">
+                        <summary aria-haspopup="listbox" role="button">瀏覽字典</summary>
+                        <ul role="listbox">
+                            <li><a href="{{ url_for('level_view', level_num=4) }}">第四級單字</a></li>
+                            <li><a href="{{ url_for('level_view', level_num=5) }}">第五級單字</a></li>
+                            <li><a href="{{ url_for('level_view', level_num=6) }}">第六級單字</a></li>
+                        </ul>
+                    </details>
+                </li>
                 <li><a href="{{ url_for('add_choice') }}">新增單字</a></li>
                 <li><a href="{{ url_for('review_choice') }}" role="button">開始複習</a></li>
                 <li><a href="{{ url_for('logout') }}" class="secondary">登出</a></li>
             </ul>
         {% else %}
-            <ul>
-                <li><a href="{{ url_for('login') }}">登入</a></li>
-                <li><a href="{{ url_for('register') }}" role="button">註冊</a></li>
-            </ul>
-        {% endif %}
-        </nav>
+            {% endif %}
+    </nav>
 
     <main class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}

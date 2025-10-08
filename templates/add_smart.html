@@ -4,11 +4,22 @@
 
 {% block content %}
     <h1 align="center">智能查詢新單字</h1>
-    <p align="center">請輸入你想要學習的英文單字，我會自動為你查詢它的所有資訊！</p>
-
+    <p align="center">輸入英文單字查詢定義，或輸入中文來尋找靈感...</p>
+    
     <form action="/lookup" method="post">
-        <label for="word">英文單字</label>
-        <input type="text" id="word" name="word" placeholder="輸入英文單字查詢定義，或輸入中文來尋找靈感..." required autofocus>
-        <button type="submit">查詢單字</button>
+        <label for="word">英文單字 / 中文詞彙</label>
+        <input type="text" id="word" name="word" placeholder="例如：persistent 或 堅持不懈的" required autofocus>
+        <button type="submit">查詢</button>
     </form>
+
+    <script>
+        const smartForm = document.querySelector('form');
+        const smartButton = smartForm.querySelector('button');
+
+        smartForm.addEventListener('submit', () => {
+            // 當表單提交時，立刻執行以下動作
+            smartButton.setAttribute('disabled', 'disabled'); // 讓按鈕無法再次點擊
+            smartButton.textContent = '🧠 AI 查詢中，請稍候...'; // 改變按鈕上的文字
+        });
+    </script>
 {% endblock %}

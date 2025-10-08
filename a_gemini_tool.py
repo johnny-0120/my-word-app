@@ -15,35 +15,24 @@ if api_key:
 # 在 a_gemini_tool.py 中找到 get_word_info 函式並替換
 import json # 再次確認檔案頂部有 import json
 
+# 在 a_gemini_tool.py 中找到 get_word_info 函式並替換
 def get_word_info(word):
-    if not model:
-        return {"error": "AI 模型未初始化"}
-
+    if not model: return {"error": "AI 模型未初始化"}
     try:
-        # --- START: 全新升級的指令 ---
         prompt = f"""
-        As a linguistic expert, provide information for the English word "{word}".
-        You MUST return a single, valid, RFC 8259 compliant JSON object and nothing else.
-        The JSON object must contain these four keys:
-        1. "definition": (string) The MOST common definition in Traditional Chinese.
-        2. "example": (string) An English example sentence, with its Traditional Chinese translation.
-        3. "etymology": (string) A brief etymology analysis in Traditional Chinese.
-        4. "related_words": (array) An array of 3-5 JSON objects representing related words (synonyms or conceptually similar words). Each object must have two keys: "word" (string) and "hint" (string, a brief Traditional Chinese explanation of its nuance).
+        Analyze the English word "{word}". Return a single, valid JSON object with these keys:
+        "definition": (string) Most common definition in Traditional Chinese.
+        "example": (string) An English example sentence with Traditional Chinese translation.
+        "synonyms": (array of strings) A list of 2-3 common synonyms.
+        "antonyms": (array of strings) A list of 1-2 common antonyms.
+        "etymology": {{ "prefixes": [{{ "prefix": string, "meaning": string }}], "roots": [{{ "root": string, "meaning": string }}], "suffixes": [{{ "suffix": string, "meaning": string }}] }}
         """
-        # --- END: 全新升級的指令 ---
-
         response = model.generate_content(prompt)
         cleaned_response = response.text.strip().replace('`json', '').replace('`', '')
         ai_data = json.loads(cleaned_response)
-
         return ai_data
-
     except Exception as e:
-        print(f"AI 查詢或 JSON 解析時發生錯誤: {e}")
-        return {
-            "error": f"AI 查詢失敗: {e}",
-            "related_words": [] # 即使出錯也回傳一個空列表，避免前端出錯
-        }
+        return {"error": f"AI 查詢失敗: {e}"}
     
 def get_sentence_feedback(word, user_sentence):
     if not model:

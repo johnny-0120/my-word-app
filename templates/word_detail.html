@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ word.word }}{% endblock %}
+
+{% block content %}
+    <article>
+        <header>
+            <h1>{{ word.word }}</h1>
+        </header>
+        <p><strong>定義:</strong> {{ word.definition }}</p>
+        <p><em>例句: {{ word.example_sentence }}</em></p>
+    </article>
+
+    {% if prefixes or roots or suffixes %}
+    <article>
+        <header><strong>詞源學分析 (Etymology)</strong></header>
+        {% for p in prefixes %}
+            <p>字首: <a href="{{ url_for('explore_by_affix', affix_type='prefix', affix_id=p.id) }}"><strong>{{ p.prefix }}</strong></a> ({{ p.meaning }})</p>
+        {% endfor %}
+        {% for r in roots %}
+            <p>字根: <a href="{{ url_for('explore_by_affix', affix_type='root', affix_id=r.id) }}"><strong>{{ r.root }}</strong></a> ({{ r.meaning }})</p>
+        {% endfor %}
+        {% for s in suffixes %}
+            <p>字尾: <a href="{{ url_for('explore_by_affix', affix_type='suffix', affix_id=s.id) }}"><strong>{{ s.suffix }}</strong></a> ({{ s.meaning }})</p>
+        {% endfor %}
+    </article>
+    {% endif %}
+
+    {% if synonyms or antonyms %}
+    <article>
+        <header><strong>相關單字</strong></header>
+        {% if synonyms %}
+            <p><strong>同義詞:</strong>
+            {% for s in synonyms %}
+                <a href="{{ url_for('word_detail', word_id=s.id) }}"><kbd>{{ s.word }}</kbd></a>
+            {% endfor %}
+            </p>
+        {% endif %}
+        {% if antonyms %}
+            <p><strong>反義詞:</strong>
+            {% for a in antonyms %}
+                <a href="{{ url_for('word_detail', word_id=a.id) }}"><kbd>{{ a.word }}</kbd></a>
+            {% endfor %}
+            </p>
+        {% endif %}
+    </article>
+    {% endif %}
+
+{% endblock %}

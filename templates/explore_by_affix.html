@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}關聯探索{% endblock %}
+
+{% block content %}
+    <hgroup>
+        <h1>關聯探索</h1>
+        <h2>所有包含 {{ affix_type_display }} "<strong>{{ affix.prefix or affix.root or affix.suffix }}</strong>" ({{ affix.meaning }}) 的單字：</h2>
+    </hgroup>
+
+    <div class="word-grid">
+    {% for word in words %}
+        <article>
+            <header>
+                <a href="{{ url_for('word_detail', word_id=word.id) }}"><strong>{{ word.word }}</strong></a>
+            </header>
+            <p>{{ word.definition }}</p>
+        </article>
+    {% else %}
+        <p>在你的個人列表中，找不到其他相關的單字。</p>
+    {% endfor %}
+    </div>
+{% endblock %}

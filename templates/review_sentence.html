@@ -12,4 +12,14 @@
             <button type="submit">請 AI 批改</button>
         </form>
     </article>
+
+    <script>
+        const sentenceForm = document.querySelector('form');
+        const sentenceButton = sentenceForm.querySelector('button');
+
+        sentenceForm.addEventListener('submit', () => {
+            sentenceButton.setAttribute('disabled', 'disabled');
+            sentenceButton.textContent = '✍️ AI 批改中，請稍候...';
+        });
+    </script>
 {% endblock %}

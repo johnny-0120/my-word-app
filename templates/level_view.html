@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}第 {{ level_num }} 級單字{% endblock %}
+
+{% block content %}
+    <h1 align="center">公共字典 - 第 {{ level_num }} 級</h1>
+
+    <div class="word-grid">
+    {% for word in words %}
+        <article>
+            <header>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <a href="{{ url_for('word_detail', word_id=word.id) }}"><strong>{{ word.word }}</strong></a>
+
+                    {% if not word.user_id %}
+                    <form action="{{ url_for('add_to_my_list', word_id=word.id) }}" method="post" style="margin: 0;">
+                        <button type="submit" class="contrast outline" style="margin: 0; padding: 0.2rem 0.5rem;">+</button>
+                    </form>
+                    {% else %}
+                    <span style="color: var(--pico-color-green-500);">✓</span>
+                    {% endif %}
+                </div>
+            </header>
+            <p>{{ word.definition }}</p>
+        </article>
+    {% else %}
+        <p>這個級別的單字尚未匯入。</p>
+    {% endfor %}
+    </div>
+{% endblock %}
