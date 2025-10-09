@@ -1,4 +1,3 @@
-# a_gemini_tool.py (語言強化版)
 import os
 import json
 import google.generativeai as genai
@@ -9,30 +8,40 @@ api_key = os.getenv("GEMINI_API_KEY")
 
 model = None
 if api_key:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-pro-latest') # 我們換回更穩定的 Pro 模型
-
-# 在 a_gemini_tool.py 中找到 get_word_info 函式並替換
-import json # 再次確認檔案頂部有 import json
-
-# 在 a_gemini_tool.py 中找到 get_word_info 函式並替換
-def get_word_info(word):
-    if not model: return {"error": "AI 模型未初始化"}
     try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-pro-latest')
+    except Exception as e:
+        print(f"初始化 Gemini 模型時發生錯誤: {e}")
+
+def get_word_info(word):
+    if not model: return {"error": "AI 模型未初始化，請檢查 API Key。"}
+    try:
+        # --- 這是我們最終、最強大的 AI 指令 ---
         prompt = f"""
-        Analyze the English word "{word}". Return a single, valid JSON object with these keys:
-        "definition": (string) Most common definition in Traditional Chinese.
-        "example": (string) An English example sentence with Traditional Chinese translation.
-        "synonyms": (array of strings) A list of 2-3 common synonyms.
-        "antonyms": (array of strings) A list of 1-2 common antonyms.
-        "etymology": {{ "prefixes": [{{ "prefix": string, "meaning": string }}], "roots": [{{ "root": string, "meaning": string }}], "suffixes": [{{ "suffix": string, "meaning": string }}] }}
+        You are a professional lexicographer and English teacher creating data for a learning app.
+        For the English word "{word}", provide a single, valid, RFC 8259 compliant JSON object and nothing else.
+        The JSON object MUST contain the following eight keys:
+        - "word": (string) The exact word "{word}".
+        - "level": (integer) The estimated vocabulary level from 1 to 6, please classify "{word}" as level 4.
+        - "part_of_speech": (string) The most common part of speech in abbreviated form (e.g., "n.", "v.", "adj.").
+        - "definition": (string) The most common and clear definition in Traditional Chinese.
+        - "collocation": (string) A very common and useful two or three-word phrase or collocation.
+        - "mnemonic": (string) A short, creative, and memorable learning tip in Traditional Chinese, possibly using association or word breakdown.
+        - "example1": (string) An English example sentence of over 10 words using the collocation, with the collocation enclosed in **double asterisks**.
+        - "example2": (string) A second, different English example sentence of over 10 words using the collocation, with the collocation enclosed in **double asterisks**.
+        - "etymology": {{ "prefixes": [{{ "part": string, "meaning": string }}], "roots": [{{ "part": string, "meaning": string }}], "suffixes": [{{ "part": string, "meaning": string }}] }}.
+        - "relations": {{ "synonyms": [string], "antonyms": [string] }}.
         """
         response = model.generate_content(prompt)
-        cleaned_response = response.text.strip().replace('`json', '').replace('`', '')
+        # 移除 AI 可能回傳的 markdown 標記
+        cleaned_response = response.text.strip().replace('```json', '').replace('```', '')
         ai_data = json.loads(cleaned_response)
         return ai_data
     except Exception as e:
-        return {"error": f"AI 查詢失敗: {e}"}
+        print(f"AI 查詢 '{word}' 或 JSON 解析時發生錯誤: {e}")
+        return {"error": f"AI 查詢時發生嚴重錯誤，請檢查終端機日誌。"}
+
     
 def get_sentence_feedback(word, user_sentence):
     if not model:
@@ -61,24 +70,16 @@ def get_sentence_feedback(word, user_sentence):
         return {"error": f"AI 批改時發生錯誤: {e}"}
 
 def get_wrong_answer_explanation(word, definition, user_guess, sentence):
-    if not model:
-        return "AI 模型未初始化"
-
+    if not model: return "AI 模型未初始化"
     try:
-        # --- START: 語言強化指令 ---
         prompt = f"""
-        You are a helpful English teacher.
-        A student is reviewing the word "{word}" (definition: {definition}) but answered incorrectly with "{user_guess}" in the context of the sentence: "{sentence}".
-
-        Provide a brief, friendly explanation in **Traditional Chinese** to help the student remember.
+        As a helpful English teacher, a student is reviewing "{word}" (definition: {definition}) but answered incorrectly with "{user_guess}" for the sentence: "{sentence}".
+        Provide a brief, friendly explanation in Traditional Chinese to help the student remember.
         """
-        # --- END: 語言強化指令 ---
-
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         return f"AI 詳解生成時發生錯誤: {e}"
-    
     # 在 a_gemini_tool.py 的最下方加入這個新函式
 
 def get_english_suggestions_from_chinese(chinese_term):

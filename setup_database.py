@@ -1,22 +1,27 @@
-# setup_database.py (V.Final - 深度學習卡片版)
+# setup_database.py (V4 - 終極學習卡片版)
 import sqlite3
 import os
 
 DB_FILE = "vocabulary.db"
 
 if os.path.exists(DB_FILE):
+    print(f"警告：資料庫檔案 '{DB_FILE}' 已存在。")
+    user_input = input("執行此腳本將會刪除所有現有資料，是否繼續？ (y/n): ")
+    if user_input.lower() != 'y':
+        print("操作已取消。")
+        exit()
     os.remove(DB_FILE)
     print(f"已刪除舊的資料庫檔案 '{DB_FILE}'。")
 
 conn = sqlite3.connect(DB_FILE)
 cursor = conn.cursor()
-print("\n正在建立全新的資料庫結構 (深度學習卡片版)...")
+print("\n正在建立全新的資料庫結構 (終極學習卡片版)...")
 
-# --- 使用者系統 (不變) ---
+# --- 使用者系統 ---
 cursor.execute('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, google_id TEXT UNIQUE)')
 print(" -> 'users' 資料表建立成功。")
 
-# --- 公共知識庫 (重大升級) ---
+# --- 公共知識庫 ---
 cursor.execute('''
     CREATE TABLE words (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +37,7 @@ cursor.execute('''
 ''')
 print(" -> 'words' 主資料表 (擴充版) 建立成功。")
 
-# --- 個人進度表 (不變) ---
+# --- 個人進度表 ---
 cursor.execute('''
     CREATE TABLE word_user_data (
         user_id INTEGER NOT NULL REFERENCES users(id),
@@ -45,7 +50,7 @@ cursor.execute('''
 ''')
 print(" -> 'word_user_data' 個人進度表建立成功。")
 
-# --- 關聯表 (不變) ---
+# --- 關聯表 ---
 cursor.execute('CREATE TABLE synonyms (word1_id INTEGER, word2_id INTEGER, PRIMARY KEY (word1_id, word2_id))')
 cursor.execute('CREATE TABLE antonyms (word1_id INTEGER, word2_id INTEGER, PRIMARY KEY (word1_id, word2_id))')
 cursor.execute('CREATE TABLE prefixes (id INTEGER PRIMARY KEY, prefix TEXT UNIQUE, meaning TEXT)')

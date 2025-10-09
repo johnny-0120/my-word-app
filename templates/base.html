@@ -1,60 +1,41 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    <style>
-        .word-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-    </style>
-    <title>{% block title %}{% endblock %} - 我的單字書</title>
-</head>
-<body>
-    <nav class="container-fluid">
-        <ul>
-            <li><a href="/"><strong>我的單字書</strong></a></li>
-        </ul>
-        {% if current_user.is_authenticated %}
-            <ul>
-                <li><a href="{{ url_for('index') }}">我的列表</a></li>
-                <li>
-                    <details role="list" dir="rtl">
-                        <summary aria-haspopup="listbox" role="button">瀏覽字典</summary>
-                        <ul role="listbox">
-                            <li><a href="{{ url_for('level_view', level_num=4) }}">第四級單字</a></li>
-                            <li><a href="{{ url_for('level_view', level_num=5) }}">第五級單字</a></li>
-                            <li><a href="{{ url_for('level_view', level_num=6) }}">第六級單字</a></li>
-                        </ul>
-                    </details>
-                </li>
-                <li><a href="{{ url_for('add_choice') }}">新增單字</a></li>
-                <li><a href="{{ url_for('review_choice') }}" role="button">開始複習</a></li>
-                <li><a href="{{ url_for('logout') }}" class="secondary">登出</a></li>
-            </ul>
-        {% else %}
-            {% endif %}
-    </nav>
+{% extends 'base.html' %}
 
-    <main class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-            <article class=" {{ category }} ">
-                {{ message }}
-            </article>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
+{% block title %}我的單字列表{% endblock %}
 
-        {% block content %}{% endblock %}
-    </main>
+{% block content %}
+    <h1 align="center">我的單字列表</h1>
     
-    <footer class="container-fluid" style="text-align: center; font-size: 0.9em; margin-top: 2rem;">
-        <p>© 2025 johnny's words app. All rights reserved.</p>
-        <p>Powered by <a href="
-</body>
-</html>
+    <div class="word-grid">
+        {% for word in words %}
+            <article>
+                <header>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <a href="{{ url_for('word_detail', word_id=word.id) }}" style="font-weight: bold; word-break: break-all;">{{ word.word }}</a>
+                        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                            <form action="{{ url_for('delete_word', id=word.id) }}" method="post" onsubmit="return confirm('確定要從你的列表中移除這個單字嗎？');" style="margin: 0;">
+                                <button type="submit" class="secondary outline" style="margin: 0; padding: 0.2rem 0.5rem;">移除</button>
+                            </form>
+                        </div>
+                    </div>
+                </header>
+                <p>{{ word.definition }}</p>
+                <footer>
+                    {% if word.review_count > 0 %}
+                        {% set mastery_percent = (word.correct_count / word.review_count * 100) | round | int %}
+                        <label for="progress-{{ word.id }}">
+                            熟練度: {{ mastery_percent }}% ({{ word.correct_count }}/{{ word.review_count }})
+                        </label>
+                        <progress id="progress-{{ word.id }}" value="{{ word.correct_count }}" max="{{ word.review_count }}"></progress>
+                    {% else %}
+                        <small><em>尚未複習過</em></small>
+                    {% endif %}
+                </footer>
+            </article>
+        {% else %}
+            <div> 
+                <p>你的個人列表是空的！</p>
+                <p>你可以從 <a href="{{ url_for('level_view', level_num=4) }}">瀏覽字典</a> 開始，將單字加入你的列表，或是透過 <a href="{{ url_for('add_choice') }}">新增單字</a> 功能來擴充公共字典。</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
