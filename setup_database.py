@@ -17,11 +17,11 @@ conn = sqlite3.connect(DB_FILE)
 cursor = conn.cursor()
 print("\n正在建立全新的資料庫結構 (終極學習卡片版)...")
 
-# --- 使用者系統 ---
+# --- 使用者系統 (不變) ---
 cursor.execute('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, google_id TEXT UNIQUE)')
 print(" -> 'users' 資料表建立成功。")
 
-# --- 公共知識庫 ---
+# --- 公共知識庫 (重大升級) ---
 cursor.execute('''
     CREATE TABLE words (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +37,7 @@ cursor.execute('''
 ''')
 print(" -> 'words' 主資料表 (擴充版) 建立成功。")
 
-# --- 個人進度表 ---
+# --- 個人進度表 (不變) ---
 cursor.execute('''
     CREATE TABLE word_user_data (
         user_id INTEGER NOT NULL REFERENCES users(id),
@@ -50,7 +50,7 @@ cursor.execute('''
 ''')
 print(" -> 'word_user_data' 個人進度表建立成功。")
 
-# --- 關聯表 ---
+# --- 關聯表 (不變) ---
 cursor.execute('CREATE TABLE synonyms (word1_id INTEGER, word2_id INTEGER, PRIMARY KEY (word1_id, word2_id))')
 cursor.execute('CREATE TABLE antonyms (word1_id INTEGER, word2_id INTEGER, PRIMARY KEY (word1_id, word2_id))')
 cursor.execute('CREATE TABLE prefixes (id INTEGER PRIMARY KEY, prefix TEXT UNIQUE, meaning TEXT)')
@@ -64,3 +64,4 @@ print(" -> 所有關聯資料表建立成功。")
 conn.commit()
 conn.close()
 print("\n🎉 恭喜！你的單字宇宙最終基礎建設已完成！")
+
