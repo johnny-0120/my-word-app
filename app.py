@@ -1,3 +1,4 @@
+# app.py (V.Final - 最終畢業版)
 import os
 import sqlite3
 import random
@@ -10,15 +11,23 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 
 load_dotenv()
-from a_gemini_tool import get_word_info, get_sentence_feedback, get_wrong_answer_explanation, get_english_suggestions_from_chinese
+from a_gemini_tool import (
+    get_word_info, 
+    get_sentence_feedback, 
+    get_wrong_answer_explanation, 
+    get_english_suggestions_from_chinese,
+    generate_multi_word_cloze
+)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "a-default-secret-key-for-development")
+# 確保 SECRET_KEY 是從環境變數讀取，這對於 session 運作至關重要
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "a-super-secret-key-that-no-one-can-guess")
 
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# --- Google OAuth 設定 ---
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
@@ -28,6 +37,7 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
+# --- 資料庫 & 使用者模型 ---
 def get_db_connection():
     conn = sqlite3.connect('vocabulary.db')
     conn.row_factory = sqlite3.Row
@@ -49,10 +59,14 @@ def load_user(user_id):
 def contains_chinese(text):
     return bool(re.search(r'[\u4e00-\u9fff]', text))
 
+# --- 身份認證路由 ---
 @app.route('/register', methods=('GET', 'POST'))
 def register():
     if request.method == 'POST':
         username, password = request.form['username'], request.form['password']
+        if not username or not password:
+            flash("使用者名稱和密碼為必填項。", "error")
+            return render_template('register.html')
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         conn = get_db_connection()
         try:
@@ -74,7 +88,7 @@ def login():
         conn = get_db_connection()
         user_row = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         conn.close()
-        if user_row and bcrypt.check_password_hash(user_row['password'], password):
+        if user_row and user_row['password'] and bcrypt.check_password_hash(user_row['password'], password):
             user = User(id=user_row['id'], username=user_row['username'], password=user_row['password'])
             login_user(user)
             return redirect(url_for('index'))
@@ -116,13 +130,14 @@ def google_callback():
     login_user(user)
     return redirect(url_for('index'))
 
+# --- 核心功能路由 ---
 @app.route('/')
 @login_required
 def index():
     query = request.args.get('query')
     conn = get_db_connection()
     base_query = """
-        SELECT w.id, w.word, w.definition, w.example1, 
+        SELECT w.*, 
                COALESCE(ud.review_count, 0) as review_count, 
                COALESCE(ud.correct_count, 0) as correct_count
         FROM words w
@@ -138,7 +153,7 @@ def index():
     words = conn.execute(base_query, tuple(params)).fetchall()
     conn.close()
     return render_template('index.html', words=words, query=query)
-
+    
 @app.route('/add_to_my_list/<int:word_id>', methods=['POST'])
 @login_required
 def add_to_my_list(word_id):
@@ -161,12 +176,6 @@ def add_choice(): return render_template('add_choice.html')
 @login_required
 def add_smart(): return render_template('add_smart.html')
 
-@app.route('/add/manual')
-@login_required
-def add_manual():
-    # 手動新增暫時使用智能查詢來簡化
-    return redirect(url_for('add_smart'))
-
 @app.route('/lookup', methods=['POST'])
 @login_required
 def lookup():
@@ -179,6 +188,7 @@ def lookup():
         flash(f"AI 查詢時發生錯誤: {ai_result['error']}", "error")
         return redirect(url_for('add_smart'))
 
+    ai_result['word'] = query # 確保 word 欄位存在
     return render_template('confirm_add.html', data=ai_result)
 
 @app.route('/save', methods=['POST'])
@@ -195,25 +205,16 @@ def save():
 
         cursor = conn.cursor()
 
-        # 1. 新增或更新主要單字
         cursor.execute("""
             INSERT INTO words (word, level, part_of_speech, definition, collocation, mnemonic, example1, example2) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(word) DO UPDATE SET
-                level=excluded.level,
-                part_of_speech=excluded.part_of_speech,
-                definition=excluded.definition,
-                collocation=excluded.collocation,
-                mnemonic=excluded.mnemonic,
-                example1=excluded.example1,
-                example2=excluded.example2
+            ON CONFLICT(word) DO NOTHING
         """, (
             word_str, data.get('level'), data.get('part_of_speech'), data.get('definition'), 
             data.get('collocation'), data.get('mnemonic'), data.get('example1'), data.get('example2')
         ))
         word_id = cursor.execute('SELECT id FROM words WHERE word = ?', (word_str,)).fetchone()['id']
 
-        # 2. 處理並連結詞源
         etymology = data.get('etymology', {})
         for p_data in etymology.get('prefixes', []):
             cursor.execute("INSERT OR IGNORE INTO prefixes (prefix, meaning) VALUES (?, ?)", (p_data['part'], p_data['meaning']))
@@ -230,7 +231,6 @@ def save():
             suffix_id = cursor.execute('SELECT id FROM suffixes WHERE suffix = ?', (s_data['part'],)).fetchone()['id']
             cursor.execute("INSERT OR IGNORE INTO word_suffixes (word_id, suffix_id) VALUES (?, ?)", (word_id, suffix_id))
 
-        # 3. 處理並連結同義/反義詞
         relations = data.get('relations', {})
         for syn_word in relations.get('synonyms', []):
             cursor.execute("INSERT OR IGNORE INTO words (word) VALUES (?)", (syn_word,))
@@ -244,7 +244,6 @@ def save():
             cursor.execute("INSERT OR IGNORE INTO antonyms (word1_id, word2_id) VALUES (?, ?)", (word_id, ant_id))
             cursor.execute("INSERT OR IGNORE INTO antonyms (word1_id, word2_id) VALUES (?, ?)", (ant_id, word_id))
         
-        # 4. 將單字加入使用者個人列表
         cursor.execute("INSERT OR IGNORE INTO word_user_data (user_id, word_id) VALUES (?, ?)", (current_user.id, word_id))
 
         conn.commit()
@@ -258,19 +257,19 @@ def save():
             
     return redirect(url_for('add_smart'))
 
-@app.route('/delete/<int:id>', methods=['POST'])
+@app.route('/delete/<int:word_id>', methods=['POST'])
 @login_required
-def delete_word(id):
+def delete_word(word_id):
     conn = get_db_connection()
-    conn.execute('DELETE FROM word_user_data WHERE word_id = ? AND user_id = ?', (id, current_user.id))
+    conn.execute('DELETE FROM word_user_data WHERE word_id = ? AND user_id = ?', (word_id, current_user.id))
     conn.commit()
     conn.close()
     flash("成功從你的列表中移除單字。", "success")
     return redirect(url_for('index'))
     
-@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+@app.route('/edit/<int:word_id>', methods=('GET', 'POST'))
 @login_required
-def edit_word(id):
+def edit_word(word_id):
     flash("編輯公共字典的功能是一個複雜的管理權限議題，暫時禁用。", "info")
     return redirect(url_for('index'))
 
@@ -325,3 +324,4 @@ def explore_by_affix(affix_type, affix_id):
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+
