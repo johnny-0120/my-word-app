@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -14,10 +15,17 @@ if api_key:
     except Exception as e:
         print(f"初始化 Gemini 模型時發生錯誤: {e}")
 
+def clean_json_response(text):
+    """安全地清理 AI 回傳的 markdown json 標籤"""
+    text = text.strip()
+    text = re.sub(r"^```json\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"^```\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+    return text
+
 def get_word_info(word):
     if not model: return {"error": "AI 模型未初始化，請檢查 API Key。"}
     try:
-        # --- 這是我們最終、最強大的 AI 指令 ---
         prompt = f"""
         You are a professional lexicographer and English teacher creating data for a learning app.
         For the English word "{word}", provide a single, valid, RFC 8259 compliant JSON object and nothing else.
@@ -30,44 +38,50 @@ def get_word_info(word):
         - "mnemonic": (string) A short, creative, and memorable learning tip in Traditional Chinese, possibly using association or word breakdown.
         - "example1": (string) An English example sentence of over 10 words using the collocation, with the collocation enclosed in **double asterisks**.
         - "example2": (string) A second, different English example sentence of over 10 words using the collocation, with the collocation enclosed in **double asterisks**.
-        - "etymology": {{ "prefixes": [{{ "part": string, "meaning": string }}], "roots": [{{ "part": string, "meaning": string }}], "suffixes": [{{ "part": string, "meaning": string }}] }}.
-        - "relations": {{ "synonyms": [string], "antonyms": [string] }}.
+        - "etymology": {{ "prefixes": [{{ "part": "string", "meaning": "string" }}], "roots": [{{ "part": "string", "meaning": "string" }}], "suffixes": [{{ "part": "string", "meaning": "string" }}] }}.
+        - "relations": {{ "synonyms": ["string"], "antonyms": ["string"] }}.
         """
         response = model.generate_content(prompt)
-        # 移除 AI 可能回傳的 markdown 標記
-        cleaned_response = response.text.strip().replace('```json', '').replace('```', '')
+        cleaned_response = clean_json_response(response.text)
         ai_data = json.loads(cleaned_response)
         return ai_data
     except Exception as e:
         print(f"AI 查詢 '{word}' 或 JSON 解析時發生錯誤: {e}")
         return {"error": f"AI 查詢時發生嚴重錯誤，請檢查終端機日誌。"}
 
-    
 def get_sentence_feedback(word, user_sentence):
-    if not model:
-        return {"error": "AI 模型未初始化"}
-
-    try:
-        # --- START: 語言強化指令 ---
-        prompt = f"""
-        As an English grammar expert, analyze the user's sentence.
-        The user is learning "{word}" and wrote: "{user_sentence}"
-
-        Return a JSON object with three keys. All string values MUST be in **Traditional Chinese**.
-        - "analysis": (string) Briefly analyze the grammar.
-        - "suggestion": (string) Provide a better, more natural version of the sentence.
-        - "usage_ok": (boolean) Is the usage of "{word}" appropriate?
-        """
-        # --- END: 語言強化指令 ---
-
-        response = model.generate_content(prompt)
-        cleaned_response = response.text.strip().replace('`json', '').replace('`', '')
-        ai_data = json.loads(cleaned_response)
-        return ai_data
-
-    except Exception as e:
-        print(f"AI 查詢或 JSON 解析時發生錯誤: {e}")
-        return {"error": f"AI 批改時發生錯誤: {e}"}
+    # 【測試模式】攔截特定的單字與句子，回傳對應的假資料
+    
+    # 測試情境 1：完美的句子 (測試 UI 的 ✅ 綠色成功提示)
+    if word == "abandon" and "sinking ship" in user_sentence.lower():
+        return {
+            "analysis": "文法完全正確！時態與語意都非常清晰。使用 'refused to do something' 的句型搭配這個單字非常道地。",
+            "suggestion": "The captain refused to abandon the sinking ship. (你的句子已經很棒了，維持這樣就好！)",
+            "usage_ok": True
+        }
+        
+    # 測試情境 2：單字用法對，但有小文法錯誤 (測試 UI 修正建議)
+    elif word == "absolute" and "confident" in user_sentence.lower():
+        return {
+            "analysis": "你使用了 'absolute' 這個形容詞來修飾，方向是正確的。不過 'confident' 是形容詞，在動詞 have 後面應該要用名詞 'confidence' 才符合文法。",
+            "suggestion": "I have absolute confidence in you.",
+            "usage_ok": True
+        }
+        
+    # 測試情境 3：單字用法錯誤、語境不自然 (測試 UI 的 ⚠️ 橘色警告提示)
+    elif word == "desert" and "homework" in user_sentence.lower():
+        return {
+            "analysis": "'desert' 通常用來指「遺棄、拋棄（人、地方或重大責任）」，帶有殘忍或背棄的意味。用來形容「放棄寫作業」語氣太重且非常不自然。",
+            "suggestion": "I want to give up on my homework. (放棄一般的事物用 give up 即可)",
+            "usage_ok": False
+        }
+        
+    # 預設回覆：如果你隨便打其他的句子，就給這個預設值
+    return {
+        "analysis": "這是一個預設的測試分析。你的句子結構基本完整。",
+        "suggestion": "這是 AI 建議的優化版本。",
+        "usage_ok": True
+    }
 
 def get_wrong_answer_explanation(word, definition, user_guess, sentence):
     if not model: return "AI 模型未初始化"
@@ -80,14 +94,10 @@ def get_wrong_answer_explanation(word, definition, user_guess, sentence):
         return response.text
     except Exception as e:
         return f"AI 詳解生成時發生錯誤: {e}"
-    # 在 a_gemini_tool.py 的最下方加入這個新函式
 
 def get_english_suggestions_from_chinese(chinese_term):
-    if not model:
-        return {"error": "AI 模型未初始化"}
-
+    if not model: return {"error": "AI 模型未初始化"}
     try:
-        # 全新的 AI 指令，專門用來反向查詢
         prompt = f"""
         As a linguistic expert and translator, your task is to suggest English words based on a Traditional Chinese term.
         The user provides the term: "{chinese_term}"
@@ -99,35 +109,18 @@ def get_english_suggestions_from_chinese(chinese_term):
         2. "hint": (string) A brief explanation in Traditional Chinese about the nuance or typical usage of this English word, to help the user choose.
 
         Provide 3 to 5 distinct suggestions.
-        Example response for "短暫的":
-        {{
-          "suggestions": [
-            {{"word": "ephemeral", "hint": "形容美麗但生命週期極短的事物，帶有詩意。"}},
-            {{"word": "transient", "hint": "指短時間的停留或存在，常用於形容過客或短期的狀況。"}},
-            {{"word": "fleeting", "hint": "形容飛逝而過的、難以捕捉的瞬間，如情感或機會。"}},
-            {{"word": "temporary", "hint": "指暫時的、非永久性的安排或解決方案。"}}]
-        }}
         """
-
         response = model.generate_content(prompt)
-        cleaned_response = response.text.strip().replace('`json', '').replace('`', '')
+        cleaned_response = clean_json_response(response.text)
         ai_data = json.loads(cleaned_response)
-
         return ai_data
-
     except Exception as e:
         print(f"AI 建議生成時發生錯誤: {e}")
         return {"error": f"AI 建議生成時發生錯誤: {e}"}
-    
-    # 在 a_gemini_tool.py 的最下方加入這個新函式
 
 def generate_multi_word_cloze(words_list):
-    if not model:
-        return {"error": "AI 模型未初始化"}
-
-    # 將單字列表轉換成一個簡單的字串，例如 "ephemeral, ubiquitous, ..."
+    if not model: return {"error": "AI 模型未初始化"}
     word_string = ", ".join(words_list)
-
     try:
         prompt = f"""
         As an expert storyteller, create a short, coherent English story or dialogue (about 50-80 words).
@@ -136,13 +129,10 @@ def generate_multi_word_cloze(words_list):
         Return a single, valid JSON object with one key, "story".
         The value of "story" should be the complete story you created.
         """
-
         response = model.generate_content(prompt)
-        cleaned_response = response.text.strip().replace('`json', '').replace('`', '')
+        cleaned_response = clean_json_response(response.text)
         ai_data = json.loads(cleaned_response)
-
         return ai_data
-
     except Exception as e:
         print(f"AI 故事生成時發生錯誤: {e}")
         return {"error": f"AI 故事生成時發生錯誤: {e}"}

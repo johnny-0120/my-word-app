@@ -16,6 +16,9 @@
         <button type="submit">使用密碼登入</button>
     </form>
     <hr>
-    <a href="{{ url_for('google_login') }}" role="button" class="contrast">透過 Google 登入</a>
+    <div class="grid">
+        <a href="{{ url_for('google_login') }}" role="button" class="contrast">透過 Google 登入</a>
+        <a href="{{ url_for('register') }}" role="button" class="secondary">註冊新帳號</a>
+    </div>
 </article>
-{% endblock %} ```
+{% endblock %}

@@ -1,41 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}我的單字 App{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+    <main class="container">
+        <nav>
+            <ul>
+                <li><strong>📚 我的單字 App</strong></li>
+            </ul>
+            <ul>
+                <li><a href="/">首頁</a></li>
+                <li><a href="/add">新增單字</a></li>
+                <li><a href="/review_choice">複習測驗</a></li>
+            </ul>
+        </nav>
+        <hr>
 
-
-{% block title %}我的單字列表{% endblock %}
-
-{% block content %}
-    <h1 align="center">我的單字列表</h1>
-    
-    <div class="word-grid">
-        {% for word in words %}
-            <article>
-                <header>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <a href="{{ url_for('word_detail', word_id=word.id) }}" style="font-weight: bold; word-break: break-all;">{{ word.word }}</a>
-                        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                            <form action="{{ url_for('delete_word', id=word.id) }}" method="post" onsubmit="return confirm('確定要從你的列表中移除這個單字嗎？');" style="margin: 0;">
-                                <button type="submit" class="secondary outline" style="margin: 0; padding: 0.2rem 0.5rem;">移除</button>
-                            </form>
-                        </div>
-                    </div>
-                </header>
-                <p>{{ word.definition }}</p>
-                <footer>
-                    {% if word.review_count > 0 %}
-                        {% set mastery_percent = (word.correct_count / word.review_count * 100) | round | int %}
-                        <label for="progress-{{ word.id }}">
-                            熟練度: {{ mastery_percent }}% ({{ word.correct_count }}/{{ word.review_count }})
-                        </label>
-                        <progress id="progress-{{ word.id }}" value="{{ word.correct_count }}" max="{{ word.review_count }}"></progress>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div style="color: red; margin-bottom: 1rem;">{{ message }}</div>
                     {% else %}
-                        <small><em>尚未複習過</em></small>
+                        <div style="color: green; margin-bottom: 1rem;">{{ message }}</div>
                     {% endif %}
-                </footer>
-            </article>
-        {% else %}
-            <div> 
-                <p>你的個人列表是空的！</p>
-                <p>你可以從 <a href="{{ url_for('level_view', level_num=4) }}">瀏覽字典</a> 開始，將單字加入你的列表，或是透過 <a href="{{ url_for('add_choice') }}">新增單字</a> 功能來擴充公共字典。</p>
-            </div>
-        {% endfor %}
-    </div>
-{% endblock %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
